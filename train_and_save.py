@@ -135,5 +135,5 @@ plt.ylabel('Loss')
 plt.title('Training and Validation Loss per Epoch')
 plt.legend()
 plt.grid(True)
-plt.xticks(epochs)  # Setting x-ticks to show correct epoch numbers
+plt.xticks(epochs)
 plt.show()

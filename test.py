@@ -10,7 +10,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Load trained model
 def load_trained_model(num_classes):
-    model = torch.load("dental_radiography/full_model_final.pth")
+    model = torch.load("YOUR_MODEL_PATH_HERE")
     return model
 
 model = load_trained_model(5)  # 4 classes + 1 background
@@ -47,7 +47,7 @@ def load_annotations(path):
         })
     return annotations_dict
 
-annotations_dict = load_annotations('PATH_TO_YOUR_MODEL')
+annotations_dict = load_annotations('PATH_TO_YOUR_ANNOTATIONS')
 
 # IoU calculation
 def bbox_iou(box1, box2):

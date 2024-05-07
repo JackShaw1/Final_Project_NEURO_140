@@ -5,7 +5,7 @@ import torchvision.transforms as T
 import os
 import matplotlib.pyplot as plt
 
-# Device load
+# Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Load trained model
@@ -47,7 +47,7 @@ def load_annotations(path):
         })
     return annotations_dict
 
-annotations_dict = load_annotations("dental_radiography/testing_annotations.csv")
+annotations_dict = load_annotations('PATH_TO_YOUR_MODEL')
 
 # IoU calculation
 def bbox_iou(box1, box2):
@@ -100,13 +100,24 @@ def predict_and_evaluate(model, dataset, annotations_dict, class_names, threshol
                                     matched_ground_truths[gt_idx] = True
                                     break
 
-                # Count unmatched predictions as false positives
-                for pred_idx in range(len(prediction['boxes'])):
-                    pred_score = prediction['scores'][pred_idx].item()
-                    if pred_score > threshold and not any(matched_ground_truths[gt_idx] for gt_idx, gt in enumerate(ground_truths)
-                                                        if gt['class'] == class_names[prediction['labels'][pred_idx].item()]
-                                                        and bbox_iou(prediction['boxes'][pred_idx].cpu().numpy().astype(int), gt['bbox']) > iou_threshold):
-                        false_positives += 1
+                        # Count unmatched predictions as false positives
+                        for pred_idx in range(len(prediction['boxes'])):
+                            pred_score = prediction['scores'][pred_idx].item()
+                            if pred_score > threshold:
+                                pred_bbox = prediction['boxes'][pred_idx].cpu().numpy().astype(int)
+                                pred_class_id = prediction['labels'][pred_idx].item()
+                                pred_class = class_names[pred_class_id]
+                        
+                                # Check if the prediction matches any of the ground truth annotations
+                                matched = any(
+                                    gt['class'] == pred_class and 
+                                    bbox_iou(pred_bbox, gt['bbox']) > iou_threshold
+                                    for gt_idx, gt in enumerate(ground_truths) if not matched_ground_truths[gt_idx]
+                                )
+                        
+                                if not matched:
+                                    false_positives += 1
+
 
         recall = true_positives / total_ground_truth if total_ground_truth > 0 else 0
         fdr = false_positives / (false_positives + true_positives) if (false_positives + true_positives) > 0 else 0
@@ -128,11 +139,11 @@ class_names = {
     4: 'Impacted Tooth'
 }
 
-# Apply transformation to pytorch tensor
+# Apply transformations
 transforms = T.Compose([T.ToTensor()])
 
 # Load dataset
-prediction_dataset = SimpleDataset('dental_radiography/test_contrast', transforms=transforms)
+prediction_dataset = SimpleDataset('PATH_TO_TESTING_DATASET', transforms=transforms)
 
 # Calculate metrics over a range of thresholds
 thresholds = [i * 0.1 for i in range(1, 10)]
@@ -151,5 +162,5 @@ plt.ylabel('Rate')
 plt.yticks([0.2, 0.4, 0.6, 0.8]) 
 plt.legend()
 plt.grid(True)
-plt.savefig('recall_fdr_plot_contrast.png') 
+plt.savefig('recall_fdr_plot.png')
 plt.close()
